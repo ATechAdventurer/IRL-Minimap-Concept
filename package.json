@@ -1,0 +1,26 @@
+{
+  "name": "irl-minimap-concept",
+  "version": "1.0.0",
+  "description": "A simple server for receiving location data and displaying it",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ATechAdventurer/IRL-Minimap-Concept.git"
+  },
+  "author": "Cameron Steele (ATechAdventurer)",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ATechAdventurer/IRL-Minimap-Concept/issues"
+  },
+  "homepage": "https://github.com/ATechAdventurer/IRL-Minimap-Concept#readme",
+  "dependencies": {
+    "body-parser": "^1.18.3",
+    "express": "^4.16.4",
+    "node-persist": "^3.0.4",
+    "node-storage": "0.0.7"
+  }
+}
