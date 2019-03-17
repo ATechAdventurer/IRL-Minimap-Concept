@@ -35,7 +35,7 @@ app.post('/client/:id', (req, res) => { //Takes the client post data
     //let dataBuf = store.get('data')
     let {id} = req.params
     let {time, longitude, latitude, accuracy} = req.body[0];
-    if(store.data[id] == null){
+    if(typeof(store.data[id]) === undefined){
         store.data[id] = []
     }
     console.log(store.data[id]);
