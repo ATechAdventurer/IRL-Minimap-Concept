@@ -1,43 +1,92 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-<meta charset='utf-8' />
-<title>Add live realtime data</title>
-<meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
-<script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.53.1/mapbox-gl.js'></script>
-<link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.53.1/mapbox-gl.css' rel='stylesheet' />
-<style>
-body { margin:0; padding:0; }
-#map { position:absolute; top:0; bottom:0; width:100%; }
-</style>
+    <meta charset='utf-8' />
+    <title>Add live realtime data</title>
+    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+    <script src="http://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+        crossorigin="anonymous"></script>
+    <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.53.1/mapbox-gl.js'></script>
+    <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.53.1/mapbox-gl.css' rel='stylesheet' />
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        #map {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 100%;
+        }
+    </style>
 </head>
+
 <body>
- 
-<div id='map'></div>
- 
-<script>
-mapboxgl.accessToken = 'pk.eyJ1IjoibWFub3N0ZWVsZSIsImEiOiJjamhtanE1OWswZWFmM2RyeDd3M3pleDdnIn0.Ccam63uwLV2GkhuDt-8DlQ';
-var map = new mapboxgl.Map({
-container: 'map',
-style: 'mapbox://styles/mapbox/streets-v9',
-zoom: 14,
-center: [-96.7533,32.9883]
-});
- 
-var url = '/geo';
-map.on('load', function () {
-window.setInterval(function() {
-map.getSource('drone').setData(url);
-}, 20);
- 
-map.addSource('drone', { type: 'geojson', data: url });
-map.addLayer({
-"id": "drone",
-"type": "line",
-"source": "drone",
-});
-});
-</script>
- 
+
+    <div id='map'></div>
+
+    <script>
+        function hashCode(str) { // java String#hashCode
+            var hash = 0;
+            for (var i = 0; i < str.length; i++) {
+                hash = str.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            return hash;
+        }
+
+        function intToRGB(i) {
+            var c = (i & 0x00FFFFFF)
+                .toString(16)
+                .toUpperCase();
+
+            return "00000".substring(0, 6 - c.length) + c;
+        }
+        var sources = [];
+        $.getJSON('/api/allClients', function (data) {
+
+            sources = data
+        });
+        mapboxgl.accessToken =
+            'pk.eyJ1IjoibWFub3N0ZWVsZSIsImEiOiJjamhtanE1OWswZWFmM2RyeDd3M3pleDdnIn0.Ccam63uwLV2GkhuDt-8DlQ';
+        var map = new mapboxgl.Map({
+            container: 'map',
+            style: 'mapbox://styles/mapbox/streets-v9',
+            zoom: 14,
+            center: [-97.719019, 30.319737]
+        });
+
+        var url = '/geo';
+        map.on('load', function () {
+            window.setInterval(function () {
+                sources.forEach((value, index) => {
+                    map.getSource(value).setData(`/api/geo/${value}`)
+                })
+            }, 200);
+            sources.forEach((value, index) => {
+                map.loadImage("/icons/"+value+".png", function(error, image) {
+                    map.addImage(value+"img", image)
+                })
+                map.addSource(value, {
+                    type: 'geojson',
+                    data: `/api/geo/${value}`
+                })
+                map.addLayer({
+                    id: value,
+                    type: "symbol",
+                    source: value,
+                    layout: {
+                        "icon-image": value+"img",
+                        "icon-size": 0.05
+                    }
+                })
+            })
+        });
+        
+    </script>
+
 </body>
+
 </html>

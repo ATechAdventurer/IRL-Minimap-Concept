@@ -3,40 +3,91 @@ let app = express();
 let bodyParser = require('body-parser')
 app.use(bodyParser.json());
 let storage = require('node-storage');
-var store = new storage('./Storage');
-//you must first call storage.init
+var dStore = new storage('./Storage');
+var store = {'data': dStore.get('data')}
 
 
-app.post('/:id', (req, res) => {
-    let item = store.get(req.params.id);
-    if (item == null) {
-        item = [];
+process.stdin.resume();//so the program will not close instantly
+
+function exitHandler(options, exitCode) {
+    if (options.cleanup) {dStore.put('data', store.data)};
+    if (exitCode || exitCode === 0) console.log(exitCode);
+    if (options.exit) process.exit();
+}
+
+//do something when app is closing
+process.on('exit', exitHandler.bind(null,{cleanup:true}));
+
+//catches ctrl+c event
+process.on('SIGINT', exitHandler.bind(null, {exit:true}));
+
+// catches "kill pid" (for example: nodemon restart)
+process.on('SIGUSR1', exitHandler.bind(null, {exit:true}));
+process.on('SIGUSR2', exitHandler.bind(null, {exit:true}));
+
+//catches uncaught exceptions
+process.on('uncaughtException', exitHandler.bind(null, {exit:true}));
+
+app.use(express.static('public'))
+
+app.post('/client/:id', (req, res) => { //Takes the client post data
+    console.log("Client post");
+    //let dataBuf = store.get('data')
+    let {id} = req.params
+    let {time, longitude, latitude, accuracy} = req.body[0];
+    if(store.data[id] == null){
+        store.data[id] = []
     }
-    item.push(req.body[0])
-    store.put(req.params.id, item);
-    res.status(200).send();
+    console.log(store.data[id]);
+    store.data[id].push({time, longitude, latitude, accuracy})
+    if(store.data[id].length >= 50){
+        store.data[id].shift()
+    }
+    dStore.put('data', store.data);
+    console.log("Pushing Data", store);
+    res.status(200).send()
 })
 
-app.get('/', (req,res)=>{
+app.get('/', (req, res) => {
     res.sendFile(__dirname + "/public/index.html")
 })
 
-app.get('/geo', (req, res) => {
-    let item = store.get('client3');
-    let data = [];
-    item.forEach(element => {
-        data.push([element.longitude, element.latitude]);
-    });
-    res.json({
-        geometry: {
-            type: "LineString",
-            coordinates: data
-        },
-        type: "Feature",
-        properties: {}
-    })
+app.get('/api/allCurrent', (req, res) => {
+    let dataHolder = {};
+    for(client in store.data){
+        let {longitude, latitude} = store.data[client][store.data[client].length - 1]
+        dataHolder[client] = { longitude, latitude }
+    }
+    res.status(200).json(dataHolder)
 })
 
+app.get('/api/allcurrent/geo', (req, res) => {
+    let structuredJSON = {
+        "type" : "FeatureCollection",
+        "features": []
+    };
+    
+    let dataHolder = {};
+    for(client in store.data){
+        let {longitude, latitude} = store.data[client][store.data[client].length - 1]
+        structuredJSON.features.push({ "type" : "Feature", "properties": {}, "geomentry": { "type": "Point", "coordinates": [longitude, latitude]}});
+    }
+    res.status(200).json(structuredJSON )
+})
 
+app.get('/api/allClients', (req, res) => {
+    let clientList = [];
+    for(client in store.data){
+        clientList.push(client);
+    }
+    res.status(200).json(clientList)
+})
 
-app.listen(process.env.PORT || 3000);
+app.get('/api/geo/:id', (req, res) => {
+    let {id} = req.params
+    let {longitude, latitude} = store.data[id][store.data[id].length - 1]
+
+    res.status(200).json({ "geometry" : {"type": "Point", "coordinates": [longitude, latitude]}, "type": "Feature", "properties": { "iconUrl": "/icons/placeholder.png" } })
+})
+
+app.listen(3000)
