@@ -4,7 +4,7 @@ let bodyParser = require('body-parser')
 app.use(bodyParser.json());
 //let storage = require('node-storage');
 //var dStore = new storage('./Storage');
-var store = {'data': null}
+let store = {'data': {}}
 
 
 process.stdin.resume();//so the program will not close instantly
