@@ -90,4 +90,4 @@ app.get('/api/geo/:id', (req, res) => {
     res.status(200).json({ "geometry" : {"type": "Point", "coordinates": [longitude, latitude]}, "type": "Feature", "properties": { "iconUrl": "/icons/placeholder.png" } })
 })
 
-app.listen(3000 || process.env.PORT)
+app.listen(process.env.PORT || 3000)
