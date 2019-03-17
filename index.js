@@ -2,15 +2,15 @@ let express = require('express')
 let app = express();
 let bodyParser = require('body-parser')
 app.use(bodyParser.json());
-let storage = require('node-storage');
-var dStore = new storage('./Storage');
-var store = {'data': dStore.get('data')}
+//let storage = require('node-storage');
+//var dStore = new storage('./Storage');
+var store = {'data': null}
 
 
 process.stdin.resume();//so the program will not close instantly
 
 function exitHandler(options, exitCode) {
-    if (options.cleanup) {dStore.put('data', store.data)};
+    if (options.cleanup) { console.log()};
     if (exitCode || exitCode === 0) console.log(exitCode);
     if (options.exit) process.exit();
 }
